@@ -65,9 +65,6 @@ const authRoutes = [
       pre: [isAdmin], // Use the isAdmin middleware before handling the request
     },
   },
-  
- 
-  
 ];
 
 export default authRoutes;

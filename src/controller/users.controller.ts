@@ -4,7 +4,7 @@ import { Customer, customerSignupJoiSchema ,customerLoginJoiSchema} from '../mod
 import jwt, { Secret } from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import Session from '../models/sessions';
-
+import { createSessionInRedis,markSessionAsInactiveInRedis } from '../middleware/redis.session';
 
 dotenv.config();
 const secretKey = process.env.SECRET_KEY ;
@@ -81,6 +81,12 @@ export const login = async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
     });
     await session.save();
   
+    //reddis session
+    await createSessionInRedis(customer._id, {
+      customerId: customer._id,
+      isActive: true,
+      expiresAt: expirationTime,
+    });
 
 
     return h.response({ message: 'Login successful', token });
@@ -92,11 +98,11 @@ export const login = async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
 //--------------------- user logout -- -  -- -- - - - -- 
 export const logout = async (request:Hapi.Request, h:Hapi.ResponseToolkit) => {
   try {
-    const customerId = request.auth.credentials.customerId;
+    const customerId = request.auth.credentials.customerId as string;
 
     // Update the session to mark it as inactive
     await Session.updateOne({ customerId, isActive: true }, { isActive: false });
-
+    await markSessionAsInactiveInRedis(customerId);
     
 
     return h.response({ message: 'Logged out successfully' }).code(200);
