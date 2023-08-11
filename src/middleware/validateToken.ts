@@ -1,4 +1,3 @@
-import jwt, { Secret } from 'jsonwebtoken';
 import Hapi from '@hapi/hapi';
 import Boom from '@hapi/boom'; // Import the Boom module for error handling
 

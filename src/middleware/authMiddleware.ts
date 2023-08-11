@@ -1,7 +1,7 @@
 import Hapi from '@hapi/hapi';
 import jwt, { Secret } from 'jsonwebtoken';
 
-const secretKey = process.env.SECRET_KEY || 'default-secret-key';
+const secretKey = process.env.SECRET_KEY ;
 
 export const isAdmin: Hapi.Lifecycle.Method = (request, h) => {     
   const token = request.headers.authorization?.replace('Bearer ', '');
