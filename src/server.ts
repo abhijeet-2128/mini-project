@@ -6,6 +6,7 @@ import authRoutes from './routes/routes';
 import { validateToken } from './middleware/validateToken';
 import * as hapiAuthJwt2 from 'hapi-auth-jwt2';
 import { log } from 'console';
+import cartRoutes from './routes/cart.routes';
 // Import other route files if you have more routes
 
 const init = async () => {
@@ -34,7 +35,7 @@ server.auth.default('jwt');
 
   // Register routes
 server.route(authRoutes as ServerRoute[]);
-
+server.route(cartRoutes);
 
   // Start the server
   await server.start();

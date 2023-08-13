@@ -5,7 +5,7 @@ export interface ProductDoc extends mongoose.Document {
   name: string;
   price: number;
   description?: string;
-  category: string;
+  category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true }, // Reference to Category model
   stock_quantity: number;
   images: string[];
   attributes: {

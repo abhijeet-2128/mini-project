@@ -57,3 +57,61 @@ export const addProduct = async (request: Hapi.Request, h: Hapi.ResponseToolkit)
     }
   };
   
+
+  export const getProduct = async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
+    try {
+      const productId = request.params.productId;
+  
+      // Find the product by ID
+      const product = await Product.findById(productId);
+      if (!product) {
+        return h.response({ message: 'Product not found' }).code(404);
+      }
+  
+      return h.response(product).code(200);
+    } catch (error: any) {
+      console.log(error);
+      return h.response({ message: 'Error getting product' }).code(500);
+    }
+  };
+  
+  // Update a product by ID
+export const updateProduct = async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
+  try {
+    const productId = request.params.productId;
+    const { error, value } = productJoiSchema.validate(request.payload);
+
+    if (error) {
+      return h.response({ message: 'Invalid payload', error }).code(400);
+    }
+
+    // Find the product by ID and update its fields
+    const updatedProduct = await Product.findByIdAndUpdate(productId, value, { new: true });
+    if (!updatedProduct) {
+      return h.response({ message: 'Product not found' }).code(404);
+    }
+
+    return h.response({ message: 'Product updated successfully', product: updatedProduct }).code(200);
+  } catch (error: any) {
+    console.log(error);
+    return h.response({ message: 'Error updating product' }).code(500);
+  }
+};
+
+// Delete a product by ID
+export const deleteProduct = async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
+  try {
+    const productId = request.params.productId;
+
+    // Find and delete the product by ID
+    const deletedProduct = await Product.findByIdAndDelete(productId);
+    if (!deletedProduct) {
+      return h.response({ message: 'Product not found' }).code(404);
+    }
+
+    return h.response({ message: 'Product deleted successfully' }).code(200);
+  } catch (error: any) {
+    console.log(error);
+    return h.response({ message: 'Error deleting product' }).code(500);
+  }
+};
