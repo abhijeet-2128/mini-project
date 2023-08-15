@@ -17,7 +17,7 @@ export const isAdmin: Hapi.Lifecycle.Method = (request, h) => {
       return h.response({ message: 'Unauthorized' }).code(403);
     }
  
-
+  
     return h.continue;
   } catch (error) {
     return h.response({ message: 'Invalid token' }).code(401);

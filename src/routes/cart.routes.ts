@@ -1,6 +1,8 @@
 // routes.ts
 import { ServerRoute } from '@hapi/hapi';
 import { addToCart, updateCartItem, removeCartItem, getCart } from '../controller/cart.controller';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const api = process.env.API_URL;
 

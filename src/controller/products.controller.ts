@@ -8,9 +8,6 @@ const secretKey = process.env.SECRET_KEY ;
 
 export const addProduct = async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
     const token = request.headers.authorization?.replace('Bearer ', '');
-    if (!token) {
-      return h.response({ message: 'Missing authentication--- token' }).code(401);
-    }
   
     try {
       const decodedToken = jwt.verify(token, secretKey as Secret) as { customerId: string, role: string };
@@ -20,7 +17,7 @@ export const addProduct = async (request: Hapi.Request, h: Hapi.ResponseToolkit)
         return h.response({ message: 'Invalid authentication token' }).code(401);
       }
   
-      // role check
+      //role check
       if (decodedToken.role !== 'admin') {
         return h.response({ message: 'Unauthorized to add a product' }).code(403);
       }
@@ -32,32 +29,29 @@ export const addProduct = async (request: Hapi.Request, h: Hapi.ResponseToolkit)
       }
   
       const { name, price, description, category, stock_quantity } = value;
-  
-      //images
-        const images: string[] = [];
-        // if (Array.isArray(request.payload['images'])) {
-        //   for (const image of request.payload['images']) {
-        //     if (typeof image === 'string') {
-        //       images.push(image); // Assuming the image is a string representing the filename
-        //       // Save image to storage and get the path
-        //       // Example: const imagePath = await saveImageToStorage(image, image); // Adjust as needed
-        //       // images.push(imagePath);
-        //     }
-        //   }
-        // }
-     
-  
-      
-      const newProduct = new Product({ name, price, description, category, stock_quantity, images});
+
+      const newProduct = new Product({ name, price, description, category, stock_quantity});
       await newProduct.save();
   
       return h.response({ message: 'Product added successfully' }).code(201);
     } catch (error: any) {
-      console.log(error)
+      console.log(error);
     }
   };
-  
 
+  //get all products 
+  export const getAllProducts = async(request:Hapi.Request, h:Hapi.ResponseToolkit)=>{
+    try{
+      const product = await Product.find();
+      return h.response(product).code(200);
+    }catch(error){
+     console.log(error);
+     
+    }
+  }
+
+  //filter products 
+ 
   export const getProduct = async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
     try {
       const productId = request.params.productId;
