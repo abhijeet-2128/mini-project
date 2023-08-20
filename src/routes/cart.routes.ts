@@ -12,7 +12,7 @@ const cartRoutes: ServerRoute[] = [
     path: api + '/cart/add',
     handler: addToCart,
     options: {
-      auth: 'jwt', // Require authentication to add products to the cart
+      auth: 'jwt', // Requires authentication
     },
   },
   {
@@ -20,7 +20,7 @@ const cartRoutes: ServerRoute[] = [
     path: api + '/cart/update/{productId}',
     handler: updateCartItem,
     options: {
-      auth: 'jwt', // Require authentication to update cart items
+      auth: 'jwt', // Requires authentication
     },
   },
   {
@@ -28,7 +28,7 @@ const cartRoutes: ServerRoute[] = [
     path: api + '/cart/remove/{productId}',
     handler: removeCartItem,
     options: {
-      auth: 'jwt', // Require authentication to remove cart items
+      auth: 'jwt', // Requires authentication
     },
   },
   {
@@ -36,7 +36,7 @@ const cartRoutes: ServerRoute[] = [
     path: api + '/cart',
     handler: getCart,
     options: {
-      auth: 'jwt', // Require authentication to retrieve the cart
+      auth: 'jwt', // Requires authentication
     },
   },
 ];

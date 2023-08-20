@@ -1,8 +1,7 @@
 // routes.ts
 import { ServerRoute } from '@hapi/hapi';
-import { addToCart, updateCartItem, removeCartItem, getCart } from '../controller/cart.controller';
-import { addProduct, deleteProduct, filterByCategory, getAllProducts, getProduct, updateProduct } from '../controller/products.controller';
-import { isAdmin } from '../middleware/authMiddleware';
+import { ProductController} from '../controller/products.controller';
+
 
 const api = process.env.API_URL;
 
@@ -10,9 +9,9 @@ const productRoutes: ServerRoute[] = [
     {
         method: 'POST',
         path: api + '/products',
-        handler: addProduct,
+        handler: ProductController.addProduct,
         options: {
-            pre: [isAdmin], // Use the isAdmin middleware before handling the request
+             auth:'jwt'
         },
     },
 
@@ -21,7 +20,7 @@ const productRoutes: ServerRoute[] = [
     {
         method: 'GET',
         path: api + '/products',
-        handler: getAllProducts,
+        handler: ProductController.getAllProducts,
         options: {
             auth: false, // No authentication required
         },
@@ -30,7 +29,7 @@ const productRoutes: ServerRoute[] = [
     {
         method: 'GET',
         path: api + '/products/{productId}',
-        handler: getProduct,
+        handler: ProductController.getProduct,
         options: {
             auth: false, // No authentication required
         },
@@ -40,7 +39,7 @@ const productRoutes: ServerRoute[] = [
     {
         method: 'GET',
         path: api + '/products/filter',
-        handler: filterByCategory,
+        handler: ProductController.filterByCategory,
         options: {
           auth: false, // No authentication required
         },
@@ -49,19 +48,19 @@ const productRoutes: ServerRoute[] = [
     {
         method: 'PUT',
         path: api + '/products/{productId}',
-        handler: updateProduct,
+        handler: ProductController.updateProduct,
         options: {
-            pre: [isAdmin],
+            auth:'jwt'
         },
     },
 
     {
         method: 'DELETE',
         path: api + '/products/{productId}',
-        handler: deleteProduct,
+        handler: ProductController.deleteProduct,
         options: {
-            pre: [isAdmin],
-        },
+            auth: 'jwt'
+          }
     },
 ];
 

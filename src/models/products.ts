@@ -7,6 +7,7 @@ export interface ProductDoc extends mongoose.Document {
   description?: string;
   category: Schema.Types.ObjectId | string;
   stock_quantity: number;
+  newKey : string;
   images: string[];
   attributes: {
     color?: string;
@@ -22,6 +23,7 @@ const productSchema = new mongoose.Schema<ProductDoc>({
   description: { type: String },
   category: { type: Schema.Types.ObjectId, ref: 'Category', required: true },
   stock_quantity: { type: Number, required: true },
+  newKey : {type: String},
   images: [{ type: String }],
   attributes: {
     color: { type: String },

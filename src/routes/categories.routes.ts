@@ -1,7 +1,6 @@
 // routes.ts
 import { ServerRoute } from '@hapi/hapi';
-import { isAdmin } from '../middleware/authMiddleware';
-import { addCategory, deleteCategory, getCategories, getCategory, updateCategory } from '../controller/categories.controller';
+import {CategoryController } from '../controller/categories.controller';
 
 const api = process.env.API_URL;
 
@@ -10,16 +9,16 @@ const categoryRoutes: ServerRoute[] = [
     {
         method: 'POST',
         path: api + '/categories',
-        handler: addCategory,
+        handler: CategoryController.addCategory,
         options: {
-            pre: [isAdmin],
-        },
+            auth: 'jwt'
+          }
     },
     // Get all categories
     {
         method: 'GET',
         path: api + '/categories',
-        handler: getCategories,
+        handler: CategoryController.getCategories,
         options: {
             auth: false, // No authentication required
         },
@@ -29,7 +28,7 @@ const categoryRoutes: ServerRoute[] = [
     {
         method: 'GET',
         path: api + '/categories/{categoryId}',
-        handler: getCategory,
+        handler: CategoryController.getCategory,
         options: {
             auth: false, // No authentication required
         },
@@ -39,20 +38,20 @@ const categoryRoutes: ServerRoute[] = [
     {
         method: 'PUT',
         path: api + '/categories/{categoryId}',
-        handler: updateCategory,
+        handler: CategoryController.updateCategory,
         options: {
-            pre: [isAdmin],
-        },
+            auth: 'jwt'
+          }
     },
 
     // Delete a category by ID (Admin only)
     {
         method: 'DELETE',
         path: api + '/categories/{categoryId}',
-        handler: deleteCategory,
+        handler: CategoryController.deleteCategory,
         options: {
-            pre: [isAdmin],
-        },
+            auth: 'jwt'
+          }
     },
 ];
 

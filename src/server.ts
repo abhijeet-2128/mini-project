@@ -5,7 +5,8 @@ import * as hapiAuthJwt2 from 'hapi-auth-jwt2';
 import cartRoutes from './routes/cart.routes';
 import userRoutes from './routes/user.routes';
 import productRoutes from './routes/product.routes';
-import categoryRoutes from './routes/ categories.routes';
+import categoryRoutes from './routes/categories.routes';
+import ordersRoutes from './routes/order.routes';
 
 const init = async () => {
   const server = Hapi.server({
@@ -20,21 +21,22 @@ const init = async () => {
   //auth strategy
   await server.register(hapiAuthJwt2);
   server.auth.strategy('jwt', 'jwt', {
-    key: secretKey, //  secret key used for JWT
+    key: secretKey, 
     validate: validateToken, // token validation function
     verifyOptions: { algorithms: ['HS256'] }, // Algorithm used for JWT
   });
 
   server.auth.default('jwt');
-  // await server.register(require('hapi-payload-raw'));
+  
+  
 
   // Register routes
   server.route(userRoutes as ServerRoute[]);
   server.route(cartRoutes);
   server.route(productRoutes);
   server.route(categoryRoutes);
+  server.route(ordersRoutes);
 
-  // Start the server
   await server.start();
 
   console.log('Server running on %s', server.info.uri);

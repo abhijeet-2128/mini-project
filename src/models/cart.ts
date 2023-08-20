@@ -1,30 +1,19 @@
-// cart.ts
-import mongoose, { Document } from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 
-export interface CartProduct extends Document {
-  product: mongoose.Schema.Types.ObjectId;
+export interface CartItemDoc extends Document {
+  customerId: Schema.Types.ObjectId;
+  productId: Schema.Types.ObjectId;
   quantity: number;
+  price: number;
 }
 
-export interface CartDoc extends Document {
-  customer: mongoose.Schema.Types.ObjectId;
-  products: CartProduct[];
-  created_at: Date;
-  updated_at: Date;
-}
-
-const cartSchema = new mongoose.Schema<CartDoc>({
-  customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true },
-  products: [
-    {
-      product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
-      quantity: { type: Number, required: true },
-    },
-  ],
-  created_at: { type: Date, default: Date.now },
-  updated_at: { type: Date, default: Date.now },
+const cartItemSchema = new mongoose.Schema<CartItemDoc>({
+  customerId: { type: Schema.Types.ObjectId, required: true, ref: 'Customer' },
+  productId: { type: Schema.Types.ObjectId, required: true, ref: 'Product' },
+  quantity: { type: Number, required: true, default: 1 },
+  price: { type: Number, required: true }, // Define the price field
 });
 
-const Cart = mongoose.model<CartDoc>('cart', cartSchema);
+const CartItem = mongoose.model<CartItemDoc>('CartItem', cartItemSchema);
 
-export default Cart;
+export default CartItem;

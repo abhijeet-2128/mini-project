@@ -1,120 +1,121 @@
 import Hapi from '@hapi/hapi';
-import Cart from '../models/cart';
+import CartItem  from '../models/cart'; 
 import { Product } from '../models/products';
-import { Customer } from '../models/customers';
 
+interface AddToCartPayload {
+  productId: string; 
+  quantity?: number; 
+}
+
+// Add an item to the cart
 export const addToCart = async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
   try {
     const customerId = request.auth.credentials.customerId; // Extract customer ID from authenticated token
-console.log(customerId);
 
-    const { productId} :any = request.payload;
-    console.log(productId);
-    
-    // Check if the product exists
+    const payload = request.payload as AddToCartPayload;
+    const productId = payload.productId; 
+    const quantity = payload.quantity || 1; // Default to 1 if quantity is not provided
+
     const product = await Product.findById(productId);
     if (!product) {
       return h.response({ message: 'Product not found' }).code(404);
     }
 
-    // Find or create the cart for the customer
-    let cart = await Cart.findOne({ customer: customerId });
-    if (!cart) {
-      cart = new Cart({ customer: customerId, products: [] });
+    const price = product.price * quantity; // Calculate total price based on quantity
+
+    // Check if the item with the same productId already exists in the cart
+    const existingCartItem = await CartItem.findOne({ customerId, productId });
+
+    if (existingCartItem) {
+      // If the item exists, update its quantity and price
+      await CartItem.findByIdAndUpdate(existingCartItem._id, {
+        quantity: existingCartItem.quantity + quantity,
+        price: existingCartItem.price + price,
+      });
+      return h.response({ message: 'Quantity updated in cart' }).code(200);
     }
 
-    //if the product is already in the cart
-    // const existingProduct = cart.products.find((cartProduct: CartProduct) => cartProduct.product.equals(productId));
+    // If the item doesn't exist, create a new cart item
+    const newCartItem = new CartItem({
+      customerId,
+      productId,
+      quantity,
+      price,
+    });
+    await newCartItem.save();
 
-    // if (existingProduct) {
-    //   existingProduct.quantity += 1;
-    // } else {
-    //   cart.products.push({ product: productId, quantity: 1 });
-    // }
-
-    await cart.save();
-
-    return h.response({ message: 'Product added to cart successfully' }).code(201);
+    return h.response({ message: 'Item added to cart successfully' }).code(200);
   } catch (error) {
-    return h.response({ message: 'Error adding product to cart', error }).code(500);
+    console.error(error);
+    return h.response({ message: 'Error adding item to cart' }).code(500);
   }
-};
+}; 
 
+
+
+// Update an item in the cart
 export const updateCartItem = async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
   try {
-    const customerId = request.auth.credentials.customerId; // Extract customer ID from authenticated token
-
+    const customerId = request.auth.credentials.customerId;
     const productId = request.params.productId;
-    // const newQuantity = request.payload.quantity;
 
-    // Find the customer's cart
-    const cart = await Cart.findOne({ customer: customerId });
+    const payload = request.payload as AddToCartPayload;
+    const newQuantity = payload.quantity || 1; // Default to 1 if quantity is not provided
 
-    if (!cart) {
-      return h.response({ message: 'Cart not found' }).code(404);
+    const product = await Product.findById(productId);
+    if (!product) {
+      return h.response({ message: 'Product not found' }).code(404);
     }
 
-    // find the cart item to update
-    // const cartItem = cart.products.find((cartProduct: CartProduct) => cartProduct.product.equals(productId));
+    const newPrice = product.price * newQuantity; // Calculate new total price
 
-    // if (!cartItem) {
-    //   return h.response({ message: 'Product not found in cart' }).code(404);
-    // }
-
-    // cartItem.quantity = newQuantity;
-    await cart.save();
+    // Update the cart item's quantity and price
+    await CartItem.findOneAndUpdate(
+      { customerId, productId },
+      { quantity: newQuantity, price: newPrice },
+    );
 
     return h.response({ message: 'Cart item updated successfully' }).code(200);
   } catch (error) {
-    return h.response({ message: 'Error updating cart item', error }).code(500);
+    console.error(error);
+    return h.response({ message: 'Error updating cart item' }).code(500);
   }
 };
 
+
+// Remove an item from the cart
 export const removeCartItem = async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
   try {
-    const customerId = request.auth.credentials.customerId; // Extract customer ID from authenticated token
-
+    const customerId = request.auth.credentials.customerId;
     const productId = request.params.productId;
 
-    // find the customer's cart
-    const cart = await Cart.findOne({ customer: customerId });
+    // Remove the cart item
+    const deletedItem = await CartItem.findOneAndDelete({ customerId, productId });
 
-    if (!cart) {
-      return h.response({ message: 'Cart not found' }).code(404);
+    if (!deletedItem) {
+      return h.response({ message: 'Cart item not found' }).code(404);
     }
-
-    // find the cart item to remove
-    // const cartItemIndex = cart.products.findIndex((cartProduct: CartProduct) => cartProduct.product.equals(productId));
-
-    // if (cartItemIndex === -1) {
-    //   return h.response({ message: 'Product not found in cart' }).code(404);
-    // }
-
-    // cart.products.splice(cartItemIndex, 1);
-    await cart.save();
 
     return h.response({ message: 'Cart item removed successfully' }).code(200);
   } catch (error) {
-    return h.response({ message: 'Error removing cart item', error }).code(500);
+    console.error(error);
+    return h.response({ message: 'Error removing cart item' }).code(500);
   }
 };
 
+
+// Get the cart items for a customer
 export const getCart = async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
   try {
-    const customerId = request.auth.credentials.customerId; // Extract customer ID from authenticated token
+    const customerId = request.auth.credentials.customerId;
 
-    // find the customer's cart and populate the products details
-    const cart = await Cart.findOne({ customer: customerId }).populate({
-      path: 'products.product',
-      select: ['name', 'price'],
-    });
-
-    if (!cart) {
-      return h.response({ message: 'Cart not found' }).code(404);
-    }
-
-    return h.response({ cart }).code(200);
+    // Find all cart items for the customer
+    const cartItems = await CartItem.find({ customerId }).populate('productId');
+  console.log(cartItems);
+  
+    return h.response(cartItems).code(200);
   } catch (error) {
-    return h.response({ message: 'Error retrieving cart', error }).code(500);
+    console.error(error);
+    return h.response({ message: 'Error fetching cart items' }).code(500);
   }
 };

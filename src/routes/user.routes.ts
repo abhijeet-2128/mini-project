@@ -1,5 +1,7 @@
-import { signup, login, getProfile, updateProfile, deleteProfile, logout } from '../controller/users.controller';
+import { UserController } from '../controller/users.controller';
 import dotenv from 'dotenv';
+import Joi from 'joi';
+
 dotenv.config();
 
 const api = process.env.API_URL;
@@ -8,31 +10,34 @@ const userRoutes = [
   {
     method: 'POST',
     path: api + '/signup',
-    handler: signup,
+    handler: UserController.signup,
     options: {
-      auth: false, // No authentication required for signup
+      auth: false, // No authentication required
     },
   },
 
   {
     method: 'POST',
     path: api + '/login',
-    handler: login,
+    handler: UserController.login,
     options: {
-      auth: false, // No authentication required for signup
+      auth: false, 
     },
   },
 
   {
     method: 'POST',
     path: api + '/logout',
-    handler: logout
+    handler: UserController.logout,
+    options: {
+      auth: 'jwt'
+    }
   },
 
   {
     method: 'GET',
     path: api + '/profile',
-    handler: getProfile,
+    handler: UserController.getProfile,
     options: {
       auth: 'jwt'
     }
@@ -41,7 +46,7 @@ const userRoutes = [
   {
     method: 'PUT',
     path: api + '/profile',
-    handler: updateProfile,
+    handler: UserController.updateProfile,
     options: {
       auth: 'jwt'
     }
@@ -50,9 +55,33 @@ const userRoutes = [
   {
     method: 'DELETE',
     path: api + '/profile',
-    handler: deleteProfile,
+    handler: UserController.deleteProfile,
     options: {
       auth: 'jwt'
+    }
+  },
+  {
+    method: 'POST',
+    path: api + '/forget-password',
+    handler: UserController.forgetPassword ,
+    options: {
+      auth: false
+    }
+  },
+  {
+    method: 'POST',
+    path: api + '/reset-password',
+    handler: UserController.resetPassword ,
+    options: {
+      auth: false,
+      validate: {
+        payload: Joi.object({
+            otp: Joi.number().required(),
+            email: Joi.string().required(),
+            newPassword:Joi.string().required()
+        })
+    }
+
     }
   },
 ];
