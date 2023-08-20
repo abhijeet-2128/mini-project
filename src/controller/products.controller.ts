@@ -30,13 +30,20 @@ export const addProduct = async (request: Hapi.Request, h: Hapi.ResponseToolkit)
   
       const { name, price, description, category, stock_quantity,images } = value;
   
-  
+      const existingProduct = await Product.findOne({ name });
+
+      if (existingProduct) {
+          return h.response({ message: 'Product with the same name already exists' }).code(409);
+      }
       const newProduct = new Product({ name, price, description, category, stock_quantity, images});
+     
+    
       await newProduct.save();
   
       return h.response({ message: 'Product added successfully' }).code(201);
-    } catch (error: any) {
-      console.log(error);
+    } catch (error) {
+      console.error(error);
+      return h.response({ message: 'An error occurred while adding the product' }).code(500);
     }
   };
 
@@ -51,11 +58,7 @@ export const addProduct = async (request: Hapi.Request, h: Hapi.ResponseToolkit)
     }
   }
 
-  //filter products 
- // products.controller.ts
-
-// ... other imports and code ...
-
+//filter products
 export const filterByCategory = async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
   try {
     const category = request.query.category;

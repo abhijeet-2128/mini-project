@@ -1,5 +1,5 @@
 import Hapi from '@hapi/hapi';
-import Cart, {CartProduct} from '../models/cart';
+import Cart from '../models/cart';
 import { Product } from '../models/products';
 import { Customer } from '../models/customers';
 

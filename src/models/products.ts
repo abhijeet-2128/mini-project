@@ -5,7 +5,7 @@ export interface ProductDoc extends mongoose.Document {
   name: string;
   price: number;
   description?: string;
-  category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true }, // Reference to Category model
+  category: Schema.Types.ObjectId | string;
   stock_quantity: number;
   images: string[];
   attributes: {
@@ -20,7 +20,7 @@ const productSchema = new mongoose.Schema<ProductDoc>({
   name: { type: String, required: true },
   price: { type: Number, required: true },
   description: { type: String },
-  category: { type: String, required: true },
+  category: { type: Schema.Types.ObjectId, ref: 'Category', required: true },
   stock_quantity: { type: Number, required: true },
   images: [{ type: String }],
   attributes: {
@@ -38,16 +38,14 @@ productSchema.pre<ProductDoc>('save', function (next) {
 
 const Product = mongoose.model<ProductDoc>('Product', productSchema);
 
-
-  const productJoiSchema = Joi.object<ProductDoc>({
-    name: Joi.string().required(),
-    description: Joi.string().required(),
-    price: Joi.number().min(0).required(),
-    category: Joi.string().required(),
-    stock_quantity: Joi.number().integer().min(0).required(),
-    images: Joi.array().items(Joi.string()),    
-    
-  });
-
+const productJoiSchema = Joi.object<ProductDoc>({
+  name: Joi.string().required(),
+  description: Joi.string().required(),
+  price: Joi.number().min(0).required(),
+  category: Joi.string().required(),
+  stock_quantity: Joi.number().integer().min(0).required(),
+  images: Joi.array().items(Joi.string()),    
+  
+});
 
 export { Product, productJoiSchema };

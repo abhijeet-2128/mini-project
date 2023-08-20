@@ -9,37 +9,45 @@ const categoryJoiSchema = Joi.object<CategoryDoc>({
 });
 
 export const addCategory = async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
-    try {
-      const { error, value } = categoryJoiSchema.validate(request.payload);
-  
-      if (error) {
-        return h.response({ message: 'Invalid payload', error }).code(400);
-      }
-  
-      const { name, description, parent_category } = value;
-  
-      // Check if a category with the same name already exists
-      const existingCategory = await Category.findOne({ name });
-      if (existingCategory) {
-        return h.response({ message: 'Category with the same name already exists' }).code(409);
-      }
-  
-      if (parent_category) {
-        // Check if the provided parent_category exists in the database
-        const parentCategory = await Category.findById(parent_category);
-        if (!parentCategory) {
-          return h.response({ message: 'Parent category not found' }).code(404);
-        }
-      }
-  
-      const newCategory = new Category({ name, description, parent_category });
-      await newCategory.save();
-  
-      return h.response({ message: 'Category created successfully', category: newCategory }).code(201);
-    } catch (error) {
-      return h.response({ message: 'Error creating category', error }).code(500);
+  try {
+    const { error, value } = categoryJoiSchema.validate(request.payload);
+
+    if (error) {
+      return h.response({ message: 'Invalid payload', error }).code(400);
     }
-  };
+
+    const { name, description, parent_category } = value;
+
+    // Check if a category with the same name already exists
+    const existingCategory = await Category.findOne({ name });
+    if (existingCategory) {
+      return h.response({ message: 'Category with the same name already exists' }).code(409);
+    }
+
+    let newCategory;
+
+    if (parent_category) {
+      // Check if the provided parent_category exists in the database
+      const parentCategory = await Category.findById(parent_category);
+      if (!parentCategory) {
+        return h.response({ message: 'Parent category not found' }).code(404);
+      }
+
+      // Add subcategory
+      newCategory = new Category({ name, description, parent_category });
+    } else {
+      // Add top-level category
+      newCategory = new Category({ name, description });
+    }
+
+    await newCategory.save();
+
+    return h.response({ message: 'Category created successfully', category: newCategory }).code(201);
+  } catch (error) {
+    return h.response({ message: 'Error creating category', error }).code(500);
+  }
+};
+
   
 // Get all categories
 export const getCategories = async (_request: Hapi.Request, h: Hapi.ResponseToolkit) => {
