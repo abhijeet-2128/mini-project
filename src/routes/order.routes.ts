@@ -16,7 +16,7 @@ const orderRoutes: Hapi.ServerRoute[] = [
   {
        method : 'POST',
        path : api+'/place-order',
-       handler: OrderController.placeOrder,
+       handler: OrderController.checkout,
        options: {
         auth: 'jwt', 
       },
@@ -49,17 +49,6 @@ const orderRoutes: Hapi.ServerRoute[] = [
           status: Joi.string().valid(...Object.values(OrderStatus)).required(),
         }),
       },
-    },
-  },
-
-
-  //payment routes
-  {
-    method: 'POST',
-    path: api + '/payment/checkout',
-    handler:  PaymentController.checkout,
-    options: {
-      auth: 'jwt', // Requires authentication
     },
   },
 

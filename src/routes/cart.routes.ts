@@ -1,6 +1,6 @@
 // routes.ts
 import { ServerRoute } from '@hapi/hapi';
-import { addToCart, updateCartItem, removeCartItem, getCart } from '../controller/cart.controller';
+import { CartController } from '../controller/cart.controller';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -10,7 +10,7 @@ const cartRoutes: ServerRoute[] = [
   {
     method: 'POST',
     path: api + '/cart/add',
-    handler: addToCart,
+    handler: CartController.addToCart,
     options: {
       auth: 'jwt', // Requires authentication
     },
@@ -18,7 +18,7 @@ const cartRoutes: ServerRoute[] = [
   {
     method: 'PUT',
     path: api + '/cart/update/{productId}',
-    handler: updateCartItem,
+    handler: CartController.updateCartItem,
     options: {
       auth: 'jwt', // Requires authentication
     },
@@ -26,7 +26,7 @@ const cartRoutes: ServerRoute[] = [
   {
     method: 'DELETE',
     path: api + '/cart/remove/{productId}',
-    handler: removeCartItem,
+    handler: CartController.removeCartItem,
     options: {
       auth: 'jwt', // Requires authentication
     },
@@ -34,7 +34,7 @@ const cartRoutes: ServerRoute[] = [
   {
     method: 'GET',
     path: api + '/cart',
-    handler: getCart,
+    handler: CartController.getCart,
     options: {
       auth: 'jwt', // Requires authentication
     },

@@ -1,12 +1,5 @@
 import Hapi from '@hapi/hapi';
-import Category, { CategoryDoc } from '../models/categories';
-import Joi from 'joi';
-
-const categoryJoiSchema = Joi.object<CategoryDoc>({
-  name: Joi.string().required(),
-  description: Joi.string(),
-  parent_category: Joi.string().allow(null),  // Assuming parent_category is a string representation of ObjectId
-});
+import Category, {categoryJoiSchema } from '../models/categories';
 
 export class CategoryController {
   static addCategory = async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {

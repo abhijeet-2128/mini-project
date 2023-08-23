@@ -1,5 +1,5 @@
 import mongoose, { Document, Schema } from 'mongoose';
-
+import Joi from 'joi';
 export interface CategoryDoc extends Document {
   name: string;
   description?: string;
@@ -14,6 +14,13 @@ const categorySchema = new mongoose.Schema<CategoryDoc>({
   parent_category: { type: Schema.Types.ObjectId, ref: 'Category', default: null }, // Change here
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now },
+});
+
+
+export const categoryJoiSchema = Joi.object<CategoryDoc>({
+  name: Joi.string().required(),
+  description: Joi.string(),
+  parent_category: Joi.string().allow(null),  // Assuming parent_category is a string representation of ObjectId
 });
 
 categorySchema.pre<CategoryDoc>('save', function (next) {

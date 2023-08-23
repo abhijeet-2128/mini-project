@@ -10,18 +10,17 @@ interface PlaceOrderPayload {
 }
 export class OrderController {
 
-  // Place Order Controller
-  static placeOrder = async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
+  static checkout = async (request: Hapi.Request, h: Hapi.ResponseToolkit) => {
     try {
       const customerId = request.auth.credentials.customerId;
   
       const payload = request.payload as PlaceOrderPayload;
       const paymentMethod = payload.paymentMethod;
-      const shippingAddress = payload.shippingAddress;
-  
+      const shippingAddress = payload.shippingAddress; 
+      
       // Fetch cart items for the customer
-      const cartItems = await CartItem.find({ customerId }).populate('productId');
-  
+      const cartItems = await CartItem.find({ customerId }).populate('productId'); //to retrieve product information
+
       // Create an array of ProductInOrder objects from the cart items
       const productsInOrder = cartItems.map((cartItem) => ({
         productId: cartItem.productId,
@@ -31,7 +30,7 @@ export class OrderController {
       // Calculate total order amount
       let totalAmount = 0;
       cartItems.forEach((cartItem) => {
-        totalAmount += cartItem.price;
+        totalAmount= totalAmount+ cartItem.price;
       });
   
       // Create a new order
@@ -41,7 +40,10 @@ export class OrderController {
         totalAmount,
         paymentMethod,
         shippingAddress,
+        created_at: new Date(),
+        updated_at: new Date(),
       });
+      
       const savedOrder = await newOrder.save();
   
       // Clear the cart
@@ -49,8 +51,12 @@ export class OrderController {
   
       return h.response({
         message: 'Order placed successfully',
+        customerId:savedOrder.customerId,
+        products:savedOrder.products,  
         orderId: savedOrder._id,
         totalAmount: savedOrder.totalAmount,
+        paymentMethod:savedOrder.paymentMethod,
+        shippingAddress:savedOrder.shippingAddress,
       }).code(200);
     } catch (error) {
       console.error(error);

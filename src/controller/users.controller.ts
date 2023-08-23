@@ -9,6 +9,9 @@ import nodemailer from 'nodemailer';
 import { createSessionInRedis, markSessionAsInactiveInRedis } from '../middleware/redis.session';
 
 const client = createClient();
+client.on('connect', function(){
+  console.log('Redis client connected');
+});
 client.connect();
 
 dotenv.config();
