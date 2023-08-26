@@ -2,6 +2,7 @@ import { ServerRoute } from '@hapi/hapi';
 import { UserController } from '../controller/users.controller';
 import dotenv from 'dotenv';
 import Joi from 'joi';
+import { customerLoginJoiSchema, customerSignupJoiSchema } from '../models/customers';
 
 dotenv.config();
 
@@ -12,12 +13,26 @@ const userRoutes: ServerRoute[] = [
     method: 'POST',
     path: api + '/signup',
     handler: UserController.signup,
+    options: {
+      tags: ['api', 'user'],
+      description: 'User signup',
+      validate: {
+        payload: customerSignupJoiSchema,
+      },
+    }
   },
 
   {
     method: 'POST',
     path: api + '/login',
     handler: UserController.login,
+    options: {
+      tags: ['api', 'user'],
+      description: 'User login',
+      validate: {
+        payload: customerLoginJoiSchema,
+      },
+    },
   },
 
   {
@@ -25,7 +40,14 @@ const userRoutes: ServerRoute[] = [
     path: api + '/logout',
     handler: UserController.logout,
     options: {
-      auth: 'jwt'
+      tags: ['api', 'user'],
+      description: 'User logout',
+      auth: 'jwt',
+      plugins: {
+        'hapi-swagger': {
+          security: [{ jwt: [] }],
+        },
+      },
     }
   },
 
@@ -34,7 +56,14 @@ const userRoutes: ServerRoute[] = [
     path: api + '/profile',
     handler: UserController.getProfile,
     options: {
-      auth: 'jwt'
+      tags: ['api', 'user'],
+      description: 'User profile',
+      auth: 'jwt',
+      plugins: {
+        'hapi-swagger': {
+          security: [{ jwt: [] }],
+        },
+      },
     }
   },
 
@@ -43,7 +72,14 @@ const userRoutes: ServerRoute[] = [
     path: api + '/profile',
     handler: UserController.updateProfile,
     options: {
-      auth: 'jwt'
+      tags: ['api', 'user'],
+      description: 'Update profile',
+      auth: 'jwt',
+      plugins: {
+        'hapi-swagger': {
+          security: [{ jwt: [] }],
+        },
+      },
     }
   },
 
@@ -52,19 +88,32 @@ const userRoutes: ServerRoute[] = [
     path: api + '/profile',
     handler: UserController.deleteProfile,
     options: {
-      auth: 'jwt'
+      tags: ['api', 'user'],
+      description: 'Delete profile',
+      auth: 'jwt',
+      plugins: {
+        'hapi-swagger': {
+          security: [{ jwt: [] }],
+        },
+      },
     }
   },
   {
     method: 'POST',
     path: api + '/forget-password',
     handler: UserController.forgetPassword,
+    options: {
+      tags: ['api', 'user'],
+      description: 'Forget password',
+    }
   },
   {
     method: 'POST',
     path: api + '/reset-password',
     handler: UserController.resetPassword,
     options: {
+      tags: ['api', 'user'],
+      description: 'Reset Password',
       validate: {
         payload: Joi.object({
           otp: Joi.number().required(),

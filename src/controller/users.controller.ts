@@ -1,12 +1,12 @@
 import { Request, ResponseToolkit } from '@hapi/hapi';
 import bcrypt from 'bcrypt';
-import { Customer, customerSignupJoiSchema, customerLoginJoiSchema } from '../models/customers';
-import jwt, { Secret } from 'jsonwebtoken';
+import { Customer} from '../models/customers';
 import dotenv from 'dotenv';
 import { createClient } from 'redis';
 import Session from '../models/sessions';
 import nodemailer from 'nodemailer';
 import { createSessionInRedis, markSessionAsInactiveInRedis } from '../middleware/redis.session';
+import { getUserProfile, loginUser, logoutUser, signupUser } from '../services/users.services';
 
 dotenv.config();
 
@@ -21,35 +21,15 @@ export class UserController {
   //------------------- User signup ------------
   static signup = async (request: Request, h: ResponseToolkit) => {
     try {
-      const { error, value } = customerSignupJoiSchema.validate(request.payload);
-      if (error) {
-        return h.response({ message: 'Invalid payload', error }).code(400);
-      }
-
-      //taking validated data from payload
-      const { email, password, full_name, phone } = value;
-
-      // Check if the customer already exists
-      const existingCustomer = await Customer.findOne({ email });
-      if (existingCustomer) {
-
-        return h.response({ message: 'Email already registered' }).code(409);
-      }
-
-      // Hash the password before saving it to the database
-      const hashedPassword = await bcrypt.hash(password, 10);
-
-      const newCustomerDocument = {
-        email: email,
-        password: hashedPassword,
-        full_name: full_name,
-        phone
+      const payload = request.payload as {
+        email: string;
+        password: string;
+        full_name: string;
+        phone: string;
       };
+      const result = await signupUser(payload);
 
-      await Customer.create(newCustomerDocument);
-
-
-      return h.response({ message: 'Signup successful' }).code(201);
+    return h.response({ message: result.message }).code(result.statusCode);
     } catch (error) {
       return h.response({ message: 'Error signing up', error }).code(500);
     }
@@ -59,51 +39,13 @@ export class UserController {
   //------------------- User login ------------------------
   static login = async (request: Request, h: ResponseToolkit) => {
     try {
-      const { error, value } = customerLoginJoiSchema.validate(request.payload);
+      const payload = request.payload as {
+        email: string;
+        password: string;
+      };
+      const result = await loginUser(payload);
 
-      if (error) {
-        return h.response({ message: 'Invalid payload', error }).code(400);
-      }
-
-      const { email, password } = value;
-
-      // Check if the customer exists
-      const customer = await Customer.findOne({ email });
-      if (!customer) {
-        return h.response({ message: 'Customer not found' }).code(404);
-      }
-
-      // Compare the provided password with the hashed password in the database
-      const passwordMatch = await bcrypt.compare(password, customer.password);
-      if (!passwordMatch) {
-        return h.response({ message: 'Invalid credentials' }).code(401);
-      }
-
-      // Create a JWT token with the customer's ID as the payload
-      const secretKey = process.env.SECRET_KEY as Secret;
-      // console.log(secretKey);
-
-      const token = jwt.sign({ customerId: customer._id, role: customer.role }, secretKey, { expiresIn: '1h' });
-
-      const expirationTime = new Date(Date.now() + (60 * 60 * 1000));
-      // Create a new session entry
-      const session = new Session({
-        customerId: customer._id,
-        isActive: true,
-        expiresAt: expirationTime,
-      });
-      await session.save();
-
-      //reddis session
-      await createSessionInRedis(customer._id, {
-        customerId: customer._id,
-        isActive: true,
-        expiresAt: expirationTime,
-      });
-
-
-      return h.response({ message: 'Login successful', token });
-
+    return h.response({ message: result.message, token: result.token }).code(result.statusCode);
 
     } catch (error) {
       return h.response({ message: 'Error logging in', error }).code(500);
@@ -115,12 +57,9 @@ export class UserController {
     try {
       const customerId = request.auth.credentials.customerId as string;
 
-      // Update the session to mark it as inactive
-      await Session.updateOne({ customerId, isActive: true }, { isActive: false });
-      await markSessionAsInactiveInRedis(customerId);
+    const result = await logoutUser(customerId);
 
-
-      return h.response({ message: 'Logged out successfully' }).code(200);
+    return h.response({ message: result.message }).code(result.statusCode);
     } catch (error) {
       // Handle logout error
       return h.response({ message: 'Error while logging out' });
@@ -131,21 +70,11 @@ export class UserController {
   // -----  -- --  - - get User profile ---- 
   static getProfile = async (request: Request, h: ResponseToolkit) => {
     try {
-      const customerId = request.auth.credentials.customerId; // Extract customer ID from authenticated token
+      const customerId:any = request.auth.credentials.customerId;
 
-      // Find the customer by ID
-      const customer = await Customer.findById(customerId);
-      if (!customer) {
-        return h.response({ message: 'Customer not found' }).code(404);
-      }
-
-      // Return the user profile information
-      return h.response({
-        email: customer.email,
-        full_name: customer.full_name,
-        phone: customer.phone,
-        role: customer.role,
-      }).code(200);
+      const result = await getUserProfile(customerId);
+  
+      return h.response(result).code(result.statusCode);
     } catch (error: any) {
       console.log(error);
       return h.response({ message: 'Error retrieving profile' }).code(500);
