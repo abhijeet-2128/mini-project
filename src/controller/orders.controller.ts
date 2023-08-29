@@ -89,14 +89,14 @@ export class OrderController {
       };
 
       //Rabbit
+      const queueName = 'email-queue';
+      const msg = JSON.stringify(emailMessage);
+      const rabbitmqConnection = await amqp.connect(`amqp://localhost`);
+      const channel = await rabbitmqConnection.createChannel();
+      await channel.assertQueue(queueName, { durable: true });
+      await channel.sendToQueue(queueName, Buffer.from(msg));
 
       const init = async () => {
-        const queueName = 'email-queue';
-        const msg = JSON.stringify(emailMessage);
-        const rabbitmqConnection = await amqp.connect(`amqp://localhost`);
-        const channel = await rabbitmqConnection.createChannel();
-        await channel.assertQueue(queueName, { durable: true });
-        await channel.sendToQueue(queueName, Buffer.from(msg));
         channel.assertQueue(queueName);
         channel.consume(queueName, async (msg: any) => {
 
@@ -108,8 +108,8 @@ export class OrderController {
               emailData.products,
               emailData.totalAmount,
               emailData.paymentMethod,
-              emailData.shippingAddress
-            );
+              emailData.shippingAddress,
+              );
 
             console.log(`Order confirmation email sent for order ${emailData.orderId}`);
           } catch (error) {

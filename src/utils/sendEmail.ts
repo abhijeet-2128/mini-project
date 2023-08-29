@@ -9,7 +9,7 @@ const transporter = nodemailer.createTransport({
 
 
 // Define a function to send the order confirmation email
-export const sendOrderConfirmationEmail = async (email: string, orderId: string, products: any[], totalAmount: number,paymentMethod:string,shippingAddress:string) => {
+export const sendOrderConfirmationEmail = async (email: string, orderId: string, products: any[], totalAmount: number,paymentMethod:string,shippingAddress:any) => {
   try {
     const mailOptions = {
       from: process.env.EMAIL,
@@ -36,7 +36,12 @@ export const sendOrderConfirmationEmail = async (email: string, orderId: string,
                 
                 <p>Total Amount: <strong>$${totalAmount}</strong></p>
                 <p>Payment method: <strong>${paymentMethod}</strong></p>
-                <p>Shipping Address: <strong>${shippingAddress}</strong></p>
+                <p>Shipping Address:</p>
+                <p>Street: <strong>${shippingAddress.street}</strong></p>
+                <p>City: <strong>${shippingAddress.city}</strong></p>
+                <p>State: <strong>${shippingAddress.state}</strong></p>
+                <p>Country: <strong>${shippingAddress.country}</strong></p>
+                
 
                 <p>Thank you for shopping with us!</p>
               </div>
