@@ -11,10 +11,11 @@ export class ProductController {
     try {
 
       const { error, value } = productJoiSchema.validate(request.payload);
-
       if (error) {
         return h.response({ message: 'Invalid payload', error }).code(400);
       }
+      const customerId = request.auth.credentials.customerId;
+
 
       const { name, price, description, category, stock_quantity, images } = value;
 
@@ -23,7 +24,11 @@ export class ProductController {
       if (existingProduct) {
         return h.response({ message: 'Product with the same name already exists' }).code(409);
       }
-      const newProduct = new Product({ name, price, description, category, stock_quantity, images });
+      const newProduct = new Product({
+        name, price, description,
+        category, stock_quantity,
+        images, vendor_id: customerId
+      });
 
 
       await newProduct.save();
@@ -139,8 +144,6 @@ export class ProductController {
   static async uploadProductImage(request: any, h: ResponseToolkit) {
     try {
       const productId = request.query.productId;
-     
-
       const data: any = request.payload;
 
       // console.log("data?>>>>>>>>>>>S", JSON.stringify(data));
@@ -148,18 +151,18 @@ export class ProductController {
         return h.response({ message: "No file Provided" }).code(400);
       }
       const name = data.file.hapi.filename;
-      console.log("name>>>>>>>>>", name);
-     
+      console.log("----->", name);
+
       const product = await Product.findById({ _id: productId });
-      if(product){
+      if (product) {
         product.images.push(name);
         await product.save();
       }
 
-     
-    
-       return h.response({message:"Image uploaded"})
-   
+
+
+      return h.response({ message: "Image uploaded" })
+
     }
     catch (error) {
       console.log("ERROR", error);

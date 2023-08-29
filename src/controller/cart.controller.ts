@@ -1,8 +1,10 @@
-import {Request,ResponseToolkit} from '@hapi/hapi';
+import { Request, ResponseToolkit } from '@hapi/hapi';
 import CartItem from '../models/cart';
 import { Product } from '../models/products';
 import { createClient } from 'redis';
-import { addToCartSession } from '../middleware/redis.session';
+import Cart from '../models/cart';
+import { Customer } from '../models/customers';
+import { any } from 'joi';
 
 
 const client = createClient();
@@ -18,43 +20,49 @@ interface AddToCartPayload {
 
 export class CartController {
 
-
-  // Add an item to the cart
   static addToCart = async (request: Request, h: ResponseToolkit) => {
     try {
-      const customerId: any = request.auth.credentials.customerId; // Extract customer ID from authenticated token
-
+      const customerId = request.auth.credentials.customerId;
       const payload = request.payload as AddToCartPayload;
+
       const productId = payload.productId;
-      const quantity = payload.quantity || 1; // Default to 1 if quantity is not provided
+      const quantity = payload.quantity || 1;
 
       const product = await Product.findById(productId);
       if (!product) {
         return h.response({ message: 'Product not found' }).code(404);
       }
 
-      const price = product.price * quantity; // Calculate total price based on quantity
+      let cart = await Cart.findOne({ customerId });
 
-      // Check if the item with the same productId already exists in the cart
-      const existingCartItem = await CartItem.findOne({ customerId, productId });
-
-      if (existingCartItem) {
-        // If the item exists, update its quantity and price
-        await CartItem.findByIdAndUpdate(existingCartItem._id, {
-          quantity: existingCartItem.quantity + quantity,
-          price: existingCartItem.price + price,
-        });
-        return h.response({ message: 'Quantity updated in cart' }).code(200);
-      }
-
-      await addToCartSession(customerId, productId, quantity, price);
-      const newCartItem = new CartItem({
-        customerId,
+      const unit_price = product.price;
+      const cartItem: any = {
         productId,
         quantity,
-        price,
-      });
-      await newCartItem.save();
+        unit_price,
+      };
+
+      if (cart) {
+        const existingItem = cart.products.find(item => item.productId.toString() === productId);
+        if (existingItem) {
+          existingItem.quantity += quantity;
+          cart.cartTotal += unit_price * quantity;
+        } else {
+          cart.products.push(cartItem);
+          cart.cartTotal += unit_price * quantity;
+        }
+        await cart.save();
+      } 
+     
+      else {
+        const cartTotal = quantity * unit_price;
+        const newCart = new Cart({
+          customerId,
+          products: [cartItem],
+          cartTotal,
+        });
+        await newCart.save();
+      }
 
       return h.response({ message: 'Item added to cart successfully' }).code(200);
     } catch (error) {
@@ -63,6 +71,24 @@ export class CartController {
     }
   };
 
+  // Get the cart items for a customer
+  static getCart = async (request: Request, h: ResponseToolkit) => {
+    try {
+      const customerId = request.auth.credentials.customerId;
+      const cart = await Cart.findOne({ customerId });
+      if (!cart) {
+        return h.response({ message: 'Cart not found' }).code(404);
+      }
+      const customerCart = {
+        products: cart.products,
+        cartTotal: cart.cartTotal,
+      };
+      return h.response(customerCart).code(200);
+    } catch (error) {
+      console.error(error);
+      return h.response({ message: 'Error fetching cart items' }).code(500);
+    }
+  };
 
 
   // Update an item in the cart
@@ -74,20 +100,28 @@ export class CartController {
       const payload = request.payload as AddToCartPayload;
       const newQuantity = payload.quantity || 1; // Default to 1 if quantity is not provided
 
-      const product = await Product.findById(productId);
-      if (!product) {
-        return h.response({ message: 'Product not found' }).code(404);
+      let cart = await Cart.findOne({ customerId });
+
+      if (!cart) {
+        return h.response({ message: 'Cart not found' }).code(404);
       }
 
-      const newPrice = product.price * newQuantity; // Calculate new total price
+      const existingItem = cart.products.find(item => item.productId.toString() === productId);
 
-      // Update the cart item's quantity and price
-      await CartItem.findOneAndUpdate(
-        { customerId, productId },
-        { quantity: newQuantity, price: newPrice },
-      );
+      if (existingItem) {
+        const oldQuantity = existingItem.quantity;
+        const unit_price = existingItem.unit_price;
+        const priceDifference = unit_price * (newQuantity - oldQuantity);
 
-      return h.response({ message: 'Cart item updated successfully' }).code(200);
+        existingItem.quantity = newQuantity;
+        cart.cartTotal += priceDifference;
+
+        await cart.save();
+
+        return h.response({ message: 'Cart item updated successfully' }).code(200);
+      } else {
+        return h.response({ message: 'Item not found in cart' }).code(404);
+      }
     } catch (error) {
       console.error(error);
       return h.response({ message: 'Error updating cart item' }).code(500);
@@ -101,34 +135,32 @@ export class CartController {
       const customerId = request.auth.credentials.customerId;
       const productId = request.params.productId;
 
-      // Remove the cart item
-      const deletedItem = await CartItem.findOneAndDelete({ customerId, productId });
 
-      if (!deletedItem) {
-        return h.response({ message: 'Cart item not found' }).code(404);
+      const cart = await Cart.findOne({ customerId });
+
+      if (!cart) {
+        return h.response({ message: 'Cart not found' }).code(404);
       }
 
-      return h.response({ message: 'Cart item removed successfully' }).code(200);
+      const existingItemIndex = cart.products.findIndex(item => (item.productId).toString() == productId.toString());
+      if (existingItemIndex === -1) {
+        return h.response({ message: 'Product not in cart' }).code(404);
+      }
+
+      const removedItem = cart.products.splice(existingItemIndex, 1)[0];
+      cart.cartTotal -= removedItem.quantity * removedItem.unit_price;
+
+      if (cart.products.length === 0) {
+
+        await Cart.deleteOne({ _id: cart._id });
+      } else {
+        await cart.save();
+      }
+
+      return h.response({ message: 'Item removed from cart successfully' }).code(200);
     } catch (error) {
       console.error(error);
-      return h.response({ message: 'Error removing cart item' }).code(500);
-    }
-  };
-
-
-  // Get the cart items for a customer
-  static getCart = async (request: Request, h: ResponseToolkit) => {
-    try {
-      const customerId = request.auth.credentials.customerId;
-
-      // Find all cart items for the customer
-      const cartItems = await CartItem.find({ customerId }).populate('productId');
-      console.log(cartItems);
-
-      return h.response(cartItems).code(200);
-    } catch (error) {
-      console.error(error);
-      return h.response({ message: 'Error fetching cart items' }).code(500);
+      return h.response({ message: 'Error removing item from cart' }).code(500);
     }
   };
 }

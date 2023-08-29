@@ -1,17 +1,10 @@
 import { Request, ResponseToolkit } from '@hapi/hapi';
-import Category, { CategoryDoc } from '../models/categories';
-import Joi from 'joi';
-
-const categoryJoiSchema = Joi.object<CategoryDoc>({
-  name: Joi.string().required(),
-  description: Joi.string(),
-  parent_category: Joi.string().allow(null),  // Assuming parent_category is a string representation of ObjectId
-});
+import Category, { categoryJoiSchema } from '../models/categories';
 
 export class CategoryController {
   static addCategory = async (request: Request, h: ResponseToolkit) => {
     try {
-   
+
       const { error, value } = categoryJoiSchema.validate(request.payload);
 
       if (error) {
@@ -64,16 +57,18 @@ export class CategoryController {
 
   static getCategory = async (request: Request, h: ResponseToolkit) => {
     try {
-      const categoryId = request.params.categoryId;
-      const category = await Category.findById(categoryId).populate('parent_category');
+      const parentId = request.params.parentId; // Assuming you have a route parameter for the parent category ID
+      const parentCategory = await Category.findById(parentId);
 
-      if (!category) {
-        return h.response({ message: 'Category not found' }).code(404);
+      if (!parentCategory) {
+        return h.response({ message: 'Parent category not found' }).code(404);
       }
 
-      return h.response({ category }).code(200);
+      const subcategories = await Category.find({ parent_category: parentCategory._id });
+
+      return h.response({ subcategories }).code(200);
     } catch (error) {
-      return h.response({ message: 'Error retrieving category', error }).code(500);
+      return h.response({ message: 'Error retrieving subcategories', error }).code(500);
     }
   };
 
