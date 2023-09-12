@@ -5,6 +5,7 @@ import bcrypt from 'bcrypt';
 export enum UserRole {
   CUSTOMER = 'customer',
   ADMIN = 'admin',
+  VENDOR = 'vendor'
 }
 
 export interface CustomerDoc extends Document {
@@ -50,7 +51,7 @@ const customerSignupJoiSchema = Joi.object<CustomerDoc>({
       'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one numeric digit, and one special character.',
   }),
   full_name: Joi.string().required(), 
-  phone:Joi.string().required(),
+  phone: Joi.string().required(),
 })
 
 const customerLoginJoiSchema = Joi.object<CustomerDoc>({

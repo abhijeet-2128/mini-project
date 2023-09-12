@@ -1,5 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose';
-
+import mongoose, { Document, Schema } from 'mongoose';
+import Joi from 'joi';
 export enum OrderStatus {
   Pending = 'pending',
   Confirmed = 'confirmed',
@@ -7,37 +7,75 @@ export enum OrderStatus {
   Delivered = 'delivered',
   Cancelled = 'cancelled',
 }
-
-export interface ProductInOrder {
-  productId: string;
+export interface OrderItem {
+  product: Schema.Types.ObjectId;
   quantity: number;
+  unit_price: number;
+}
+
+interface ShippingAddress {
+  houseNo: string;
+  city: string;
+  district: string;
+  country: string;
 }
 
 export interface OrderDoc extends Document {
-  customerId: string;
-  products: ProductInOrder[];
-  totalAmount: number;
+  customerId: Schema.Types.ObjectId;
+  items: OrderItem[];
+  orderTotal: number;
   status: OrderStatus;
-  shippingAddress: string;
+  //transction details
   paymentMethod: string;
-  createdAt : Date;
+  paymentStatus: string;
+  transactionId:string;
+  paymentTimestamp:Date;
+  shippingAddress: ShippingAddress; 
+  createdAt: Date;
 }
 
-const orderSchema = new Schema({
-  customerId: { type: Schema.Types.ObjectId, ref: 'Customer', required: true },
-  products: [
-    {
-      productId: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
-      quantity: { type: Number, required: true },
-    },
-  ],
-  totalAmount: { type: Number, required: true },
-  status: { type: String, enum: Object.values(OrderStatus), default: OrderStatus.Pending },
-  shippingAddress: { type: String, required: true },
-  paymentMethod: { type: String, required: true },
-  createdAt : Date,
-});
 
-const Order = mongoose.model<OrderDoc>('Order', orderSchema);
+const orderSchema = new mongoose.Schema<OrderDoc>(
+  {
+    customerId: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      ref: 'Customer',
+    },
+    items: [
+      {
+        product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
+        quantity: { type: Number, required: true },
+        unit_price: { type: Number, required: true },
+      },
+    ],
+    orderTotal: { type: Number, required: true },
+    paymentMethod: { type: String, required: true },
+    paymentStatus: {
+      type: String,
+      enum: ['Pending', 'Paid'],
+      default: 'Pending',
+    },
+    transactionId: {
+      type: String,
+      default: '',
+    },
+    paymentTimestamp: {
+      type: Date,
+      default: null,
+    },
+    status: { type: String, enum: Object.values(OrderStatus), default: OrderStatus.Pending },
+    shippingAddress: {
+      houseNo: { type: String, required: true },
+      city: { type: String, required: true },
+      district: { type: String, required: true },
+      country: { type: String, required: true },
+    },
+    createdAt: { type: Date, default: Date.now },
+  },
+  { timestamps: true }
+);
+
+const Order = mongoose.model<OrderDoc>('Orders', orderSchema);
 
 export default Order;

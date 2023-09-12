@@ -1,7 +1,9 @@
 // routes.ts
 import { ServerRoute } from '@hapi/hapi';
-import {CategoryController } from '../controller/categories.controller';
+import { CategoryController } from '../controller/categories.controller';
 import { adminAuthMiddleware } from '../middleware/admin.check';
+import { categoryJoiSchema } from '../models/categories';
+import Joi from 'joi';
 
 const api = process.env.API_URL;
 
@@ -12,8 +14,13 @@ const categoryRoutes: ServerRoute[] = [
         path: api + '/categories',
         handler: CategoryController.addCategory,
         options: {
+            tags: ['api', 'admin'],
+            description: 'Add category',
             auth: 'jwt',
             pre: [{ method: adminAuthMiddleware }],
+            validate: {
+                payload: categoryJoiSchema,
+            },
         },
     },
     // Get all categories
@@ -21,12 +28,25 @@ const categoryRoutes: ServerRoute[] = [
         method: 'GET',
         path: api + '/categories',
         handler: CategoryController.getCategories,
+        options: {
+            tags: ['api', 'user'],
+            description: 'Get all categories',
+        }
     },
-    // Get a category by ID
+    // Get all subcategories
     {
         method: 'GET',
-        path: api + '/categories/{categoryId}',
+        path: api + '/categories/{parentId}',
         handler: CategoryController.getCategory,
+        options: {
+            tags: ['api', 'user'],
+            description: 'Get all subcategories',
+            validate: {
+                params: Joi.object({
+                    parentId: Joi.string().required(),
+                }),
+            },
+        }
     },
 
     // Update a category by ID (Admin only)
@@ -35,8 +55,16 @@ const categoryRoutes: ServerRoute[] = [
         path: api + '/categories/{categoryId}',
         handler: CategoryController.updateCategory,
         options: {
+            tags: ['api', 'admin'],
+            description: 'Update Category',
             auth: 'jwt',
             pre: [{ method: adminAuthMiddleware }],
+            validate: {
+                payload: categoryJoiSchema,
+                params: Joi.object({
+                    categoryId: Joi.string().required(),
+                }),
+            },
         },
     },
 
@@ -46,10 +74,16 @@ const categoryRoutes: ServerRoute[] = [
         path: api + '/categories/{categoryId}',
         handler: CategoryController.deleteCategory,
         options: {
+            tags: ['api', 'admin'],
+            description: 'Delete Category',
             auth: 'jwt',
             pre: [{ method: adminAuthMiddleware }],
+            validate: {
+                params: Joi.object({
+                    categoryId: Joi.string().required(),
+                }),
+            },
         },
     },
 ];
-
 export default categoryRoutes;

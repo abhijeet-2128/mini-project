@@ -1,11 +1,11 @@
 import { Request, ResponseToolkit } from '@hapi/hapi';
 import Boom from '@hapi/boom';
 
-export const adminAuthMiddleware = (request: Request, h: ResponseToolkit) => {
+export const vendorAuthMiddleware = (request: Request, h: ResponseToolkit) => {
   const { role } = request.auth.credentials;
 
-  if (role !== 'admin') {
-    throw Boom.forbidden('Unauthorized access');
+  if (role !== 'vendor') {
+    throw Boom.forbidden('Sorry you are not a vendor');
   }
 
   return h.continue; 
