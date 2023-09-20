@@ -8,10 +8,7 @@ export interface ProductDoc extends mongoose.Document {
   category: Schema.Types.ObjectId | string;
   stock_quantity: number;
   images: [string];
-  attributes: {
-    color?: string;
-    size?: string;
-  };
+  vendor_id : Schema.Types.ObjectId,
   created_at: Date;
   updated_at: Date;
 }
@@ -23,9 +20,8 @@ const productSchema = new mongoose.Schema<ProductDoc>({
   category: { type: Schema.Types.ObjectId, ref: 'Category', required: true },
   stock_quantity: { type: Number, required: true },
   images: [{ type: String }],
-  attributes: {
-    color: { type: String },
-    size: { type: String },
+  vendor_id : {
+    type: Schema.Types.ObjectId ,ref:'Customer',required:true
   },
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now },

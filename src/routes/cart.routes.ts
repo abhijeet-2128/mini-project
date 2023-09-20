@@ -1,7 +1,7 @@
-// routes.ts
 import { ServerRoute } from '@hapi/hapi';
 import { CartController } from '../controller/cart.controller';
 import dotenv from 'dotenv';
+import Joi from 'joi';
 dotenv.config();
 
 const api = process.env.API_URL;
@@ -13,7 +13,15 @@ const cartRoutes: ServerRoute[] = [
     handler: CartController.addToCart,
     options: {
       auth: 'jwt',
-    },
+      tags: ['api', 'cart'],
+      description: 'Add to cart',
+      validate: {
+        payload: Joi.object({
+          productId: Joi.string().required(),
+          quantity: Joi.number().integer().min(1).required(),
+        }),
+      },
+    }
   },
   {
     method: 'PUT',
@@ -21,7 +29,17 @@ const cartRoutes: ServerRoute[] = [
     handler: CartController.updateCartItem,
     options: {
       auth: 'jwt',
-    },
+      tags: ['api', 'cart'],
+      description: 'Update cart',
+      validate: {
+        params: Joi.object({
+          productId: Joi.string().required(),
+        }),
+        payload: Joi.object({
+          quantity: Joi.number().integer().min(1).required(),
+        }),
+      },
+    }
   },
   {
     method: 'DELETE',
@@ -29,7 +47,14 @@ const cartRoutes: ServerRoute[] = [
     handler: CartController.removeCartItem,
     options: {
       auth: 'jwt',
-    },
+      tags: ['api', 'cart'],
+      description: 'Remove cart',
+      validate: {
+        params: Joi.object({
+          productId: Joi.string().required(),
+        }),
+      },
+    }
   },
   {
     method: 'GET',
@@ -37,7 +62,9 @@ const cartRoutes: ServerRoute[] = [
     handler: CartController.getCart,
     options: {
       auth: 'jwt',
-    },
+      tags: ['api', 'cart'],
+      description: 'Get cart',
+    }
   },
 ];
 

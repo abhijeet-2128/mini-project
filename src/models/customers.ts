@@ -5,13 +5,14 @@ import bcrypt from 'bcrypt';
 export enum UserRole {
   CUSTOMER = 'customer',
   ADMIN = 'admin',
+  VENDOR = 'vendor'
 }
 
 export interface CustomerDoc extends Document {
   email: string;
   password: string;
   full_name: string;
-  phone : number;
+  phone: number;
   role: UserRole;
   created_at: Date;
   updated_at: Date;
@@ -23,7 +24,7 @@ const customerSchema: Schema<CustomerDoc> = new Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   full_name: { type: String },
-  phone: {type:Number},
+  phone: { type: Number },
   role: { type: String, enum: Object.values(UserRole), default: UserRole.CUSTOMER },
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now },
@@ -41,22 +42,29 @@ customerSchema.methods.comparePassword = async function (password: string): Prom
 const Customer = mongoose.model<CustomerDoc>('Customer', customerSchema);
 
 const customerSignupJoiSchema = Joi.object<CustomerDoc>({
-  email: Joi.string().email().required(),
-  password: Joi.string()
-  .pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])[A-Za-z0-9!@#$%^&*]{8,}$'))
-  .required()
-  .messages({
-    'string.pattern.base':
-      'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one numeric digit, and one special character.',
+  email: Joi.string().email().required().messages({
+    'string.email': 'Invalid email format',
+    'any.required': 'Email is required',
   }),
-  full_name: Joi.string().required(), 
-  phone:Joi.string().required(),
+  password: Joi.string()
+    .pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])[A-Za-z0-9!@#$%^&*]{8,}$'))
+    .required()
+    .messages({
+      'string.pattern.base':
+        'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one numeric digit, and one special character.',
+    }),
+  full_name: Joi.string().required(),
+  phone: Joi.string()
+    .pattern(/^[0-9]{10}$/) // Matches a 10-digit phone number
+    .required().messages({
+      'string.pattern.base': 'Phone number must be a 10-digit number',
+      'any.required': 'Phone number is required',
+    }),
 })
 
 const customerLoginJoiSchema = Joi.object<CustomerDoc>({
   email: Joi.string().email().required(),
   password: Joi.string().required(),
-  
 });
 
 export { Customer, customerSignupJoiSchema, customerLoginJoiSchema };
