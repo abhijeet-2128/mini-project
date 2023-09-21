@@ -1,8 +1,9 @@
 import { Request, ResponseToolkit } from '@hapi/hapi';
-import { CategoryService } from '../services/categories.service';
+import { CategoryService } from '../services/categories.services';
 import { categoryJoiSchema } from '../models/categories';
 
 export class CategoryController {
+  
   static async addCategory(request: Request, h: ResponseToolkit) {
     try {
       const { name, description, parent_category }:any = request.payload;

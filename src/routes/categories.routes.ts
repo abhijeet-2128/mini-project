@@ -1,7 +1,7 @@
 // routes.ts
 import { ServerRoute } from '@hapi/hapi';
 import { CategoryController } from '../controller/categories.controller';
-import { adminAuthMiddleware } from '../middleware/admin.check';
+import { adminAuthMiddleware } from '../middleware/auth.check';
 import { categoryJoiSchema } from '../models/categories';
 import Joi from 'joi';
 

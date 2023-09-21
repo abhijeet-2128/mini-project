@@ -36,9 +36,6 @@ export const markSessionAsInactiveInRedis = async (customerId: string) => {
 export const checkSessionInRedis = async (request: Request, h: ResponseToolkit) => {
   const customerId = request.auth.credentials.customerId;
   const sessionExists = await redis.exists(`session:${customerId}`);
-
-  // console.log("Redis check:", sessionExists);
-
   if (sessionExists === 0) {
     throw Boom.forbidden('You have been logged out ! Please login again');
   }

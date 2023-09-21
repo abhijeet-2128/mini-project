@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import Cart from '../models/cart';
 import { Customer } from '../models/customers';
 import { Product } from '../models/products';
-import { customer_service } from '../services/users.services';
+import { UserService } from '../services/users.services';
 import { CartService } from '../services/cart.services';
 import { OrderService } from '../services/orders.services';
 import { createStripe } from '../utils/stripe.con';
@@ -156,7 +156,7 @@ export class OrderController {
       const payload = request.payload as CheckoutPayload;
       const { paymentMethod, shippingAddress } = payload;
 
-      const customer = await customer_service.checkUserExists({ _id: customerId });
+      const customer = await UserService.checkUserExists({ _id: customerId });
       if (!customer) {
         return h.response({ message: 'Customer not found' }).code(404);
       }
@@ -164,7 +164,6 @@ export class OrderController {
       if (!cart) {
         return h.response({ message: 'Cart does not exist' }).code(404);
       }
-
       const orderTotal = cart.cartTotal;
 
       if (cart.products.length === 0) {
@@ -209,21 +208,15 @@ export class OrderController {
     }
   }
 
-
-
   //get order by id
-  static getOrder = async (request: Request, h: ResponseToolkit) => {
+  static async getOrder(request: Request, h: ResponseToolkit) {
     try {
       const customerId = request.auth.credentials.customerId;
       const orderId = request.params.orderId;
-
       const order = await Order.findOne({ _id: orderId, customerId }).populate('items.product');
-      console.log(order);
-
       if (!order) {
         return h.response({ message: 'Order not found' }).code(404);
       }
-
       const formattedOrder = {
         orderId: order._id,
         orderItems: order.items,
@@ -231,7 +224,6 @@ export class OrderController {
         order_status: order.status,
         ordered: order.createdAt
       };
-
       return h.response(formattedOrder).code(200);
     } catch (error) {
       console.error(error);
@@ -239,40 +231,31 @@ export class OrderController {
     }
   };
 
-
   //get all orders
-  static getAllOrders = async (request: Request, h: ResponseToolkit) => {
+  static async getAllOrders(request: Request, h: ResponseToolkit) {
     try {
       const customerId = request.auth.credentials.customerId;
-
       const orders = await Order.find({ customerId }).populate('items.product').sort({ createdAt: -1 });
-
       const formattedOrders: any = orders.map(order => ({
         orderId: order._id,
         orderTotal: order.orderTotal,
         order_status: order.status,
         ordered: order.createdAt,
       }));
-
       return h.response(formattedOrders).code(200);
     } catch (error) {
-      console.error(error);
       return h.response({ message: 'Error fetching orders' }).code(500);
     }
   };
 
-
-  static updateOrderStatus = async (request: Request, h: ResponseToolkit) => {
+  static async updateOrderStatus(request: Request, h: ResponseToolkit){
     try {
-
       const orderId = request.params.orderId;
       const { status } = request.payload as { status: OrderStatus };
-
       const order = await Order.findByIdAndUpdate(orderId, { status }, { new: true });
       if (!order) {
         return h.response({ message: 'Order not found' }).code(404);
       }
-
       return h.response({ message: 'Order status updated successfully' }).code(200);
     } catch (error) {
       console.error(error);
@@ -280,35 +263,28 @@ export class OrderController {
     }
   };
 
-  static cancelOrder = async (request: Request, h: ResponseToolkit) => {
+  static async cancelOrder(request: Request, h: ResponseToolkit){
     try {
       const customerId = request.auth.credentials.customerId;
       const orderId = request.params.orderId;
-
       const order = await Order.findOne({ _id: orderId, customerId });
-
       if (!order) {
         return h.response({ message: 'Order not found' }).code(404);
       }
-
       if (order.status === OrderStatus.Cancelled) {
         return h.response({ message: 'Order is already canceled' }).code(400);
       }
-
       // restore product stock quantities
       await Promise.all(order.items.map(async (item) => {
         const product = await Product.findById(item.product);
-
         if (product) {
           product.stock_quantity += item.quantity;
           await product.save();
         }
       }));
-
       // Update the order status to cancel
       order.status = OrderStatus.Cancelled;
       await order.save();
-
       return h.response({ message: 'Order canceled successfully' }).code(200);
     } catch (error) {
       console.error(error);
@@ -320,14 +296,11 @@ export class OrderController {
   static async paymentSuccessHandler(request: any, h: any) {
     try {
       const event = request.payload;
-
       console.log('Received Stripe webhook event:', event);
-
       if (event.type === 'checkout.session.completed') {
         const session = event.data.object;
         const orderId = extractOrderIdFromSuccessUrl(session.success_url);
         const updatedOrder = await Order.findByIdAndUpdate(orderId, { paymentStatus: 'Paid' }, { new: true });
-
         if (!updatedOrder) {
           const errorMessage = 'Order not found or could not be updated';
           console.error(errorMessage);

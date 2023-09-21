@@ -19,6 +19,8 @@ export const validateToken = async (decoded: any, request: Hapi.Request, h: Hapi
       },
     };
     return credentials;
+
+   
   } catch (error) {
     throw Boom.unauthorized('Invalid token');
   }

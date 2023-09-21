@@ -8,12 +8,19 @@ export enum UserRole {
   VENDOR = 'vendor'
 }
 
+export enum UserStatus {
+ INACTIVE ='inactive',
+ ACTIVE ='active',
+ BLOCKED ='blocked',
+ DELETED ='deleted',
+}
 export interface CustomerDoc extends Document {
   email: string;
   password: string;
   full_name: string;
   phone: number;
   role: UserRole;
+  status: UserStatus;
   created_at: Date;
   updated_at: Date;
 
@@ -26,6 +33,11 @@ const customerSchema: Schema<CustomerDoc> = new Schema({
   full_name: { type: String },
   phone: { type: Number },
   role: { type: String, enum: Object.values(UserRole), default: UserRole.CUSTOMER },
+  status: {
+    type: String,  
+    enum: Object.values(UserStatus),
+    default: UserStatus.ACTIVE,
+  },
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now },
 });
@@ -55,7 +67,7 @@ const customerSignupJoiSchema = Joi.object<CustomerDoc>({
     }),
   full_name: Joi.string().required(),
   phone: Joi.string()
-    .pattern(/^[0-9]{10}$/) 
+    .pattern(/^[0-9]{10}$/) // Matches a 10-digit phone number
     .required().messages({
       'string.pattern.base': 'Phone number must be a 10-digit number',
       'any.required': 'Phone number is required',

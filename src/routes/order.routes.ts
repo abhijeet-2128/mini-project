@@ -3,7 +3,7 @@ import Joi, { options } from 'joi';
 import { OrderStatus } from '../models/orders';
 import { OrderController } from '../controller/orders.controller';
 import dotenv from 'dotenv';
-import { adminAuthMiddleware } from '../middleware/admin.check';
+import { adminAuthMiddleware } from '../middleware/auth.check';
 
 dotenv.config();
 

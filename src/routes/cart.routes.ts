@@ -2,6 +2,7 @@ import { ServerRoute } from '@hapi/hapi';
 import { CartController } from '../controller/cart.controller';
 import dotenv from 'dotenv';
 import Joi from 'joi';
+import { checkUserStatus } from '../middleware/auth.check';
 dotenv.config();
 
 const api = process.env.API_URL;
@@ -13,6 +14,7 @@ const cartRoutes: ServerRoute[] = [
     handler: CartController.addToCart,
     options: {
       auth: 'jwt',
+      pre:[{method:checkUserStatus}],
       tags: ['api', 'cart'],
       description: 'Add to cart',
       validate: {

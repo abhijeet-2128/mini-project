@@ -28,6 +28,7 @@ export class CartService {
 
 
   static async addToCart(customerId: string, productId: string, quantity: number = 1) {
+    
     const product = await Product.findById(productId);
     if (!product) {
       throw new Error('Product not found');

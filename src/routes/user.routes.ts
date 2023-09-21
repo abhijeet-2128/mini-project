@@ -3,7 +3,7 @@ import { UserController } from '../controller/users.controller';
 import dotenv from 'dotenv';
 import Joi from 'joi';
 import { UserRole, customerLoginJoiSchema, customerSignupJoiSchema } from '../models/customers';
-import { adminAuthMiddleware } from '../middleware/admin.check';
+import { adminAuthMiddleware, checkUserStatus } from '../middleware/auth.check';
 import { checkSessionInRedis } from '../middleware/redis.session';
 dotenv.config();
 
@@ -19,9 +19,6 @@ const userRoutes: ServerRoute[] = [
       description: 'User signup',
       validate: {
         payload: customerSignupJoiSchema,
-        failAction: (err) => {
-          throw err;
-        },
       }
     },
   },
@@ -47,6 +44,7 @@ const userRoutes: ServerRoute[] = [
       tags: ['api', 'user'],
       description: 'User logout',
       auth: 'jwt',
+      pre: [{ method: checkUserStatus }],
       plugins: {
         'hapi-swagger': {
           security: [{ jwt: [] }],

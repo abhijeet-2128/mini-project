@@ -1,7 +1,7 @@
 import { ServerRoute } from '@hapi/hapi';
 import { ProductController } from '../controller/products.controller';
-import { adminAuthMiddleware } from '../middleware/admin.check';
-import { vendorAuthMiddleware } from '../middleware/vendor.check';
+// import { adminAuthMiddleware } from '../middleware/auth.check';
+import { vendorAuthMiddleware ,adminAuthMiddleware} from '../middleware/auth.check';
 import { productJoiSchema } from '../models/products';
 import Joi from 'joi';
 

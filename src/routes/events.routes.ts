@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import { Event, eventSchemaJoi } from "../models/events";
 import { Customer } from "../models/customers";
 import { sendEmail } from "../utils/email.sender";
-import { adminAuthMiddleware } from "../middleware/admin.check";
+import { adminAuthMiddleware } from "../middleware/auth.check";
 
 dotenv.config();
 
@@ -28,16 +28,13 @@ const eventRoutes: ServerRoute[] = [
         if (existingEvent) {
           return h.response({ message: 'Event with the same name already exists' }).code(409);
         }
-
         const newEvent = new Event({
           name,
           date,
           location,
           description,
         });
-
         await newEvent.save();
-
         return h.response('Event added successfully').code(200);
       } catch (error) {
         console.error('Error adding event:', error);
@@ -51,11 +48,8 @@ const eventRoutes: ServerRoute[] = [
     path: api + '/event/{eventId}',
     handler: async (request, h) => {
       try {
-
         const { eventId } = request.params;
         const { name, date, location, description }: any = request.payload;
-
-        //find event by id
         const existingEvent = await Event.findById(eventId);
         if (!existingEvent) {
           return h.response({ message: 'Event not found' });
@@ -68,7 +62,7 @@ const eventRoutes: ServerRoute[] = [
         await existingEvent.save();
         return h.response('Event details updated successfully').code(200);
       } catch (error) {
-        console.error('Error updating event details', error);
+        console.error('Error updating event details');
         return h.response('Error updating event details').code(500);
       }
     }
@@ -97,7 +91,7 @@ const eventRoutes: ServerRoute[] = [
         }
         console.log('Email notifications sent for upcoming events.');
       } catch (error) {
-        console.error('Error sending event reminders:', error);
+        console.error('Error sending event reminders:');
       }
     }
   },
@@ -110,7 +104,6 @@ const eventRoutes: ServerRoute[] = [
         const events = await Event.find();
         return h.response({ events }).code(200);
       } catch (error) {
-        console.log(error);
         return h.response({ message: "Error while retrieving events" })
       }
     }
