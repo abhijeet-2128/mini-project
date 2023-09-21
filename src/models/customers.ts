@@ -55,7 +55,7 @@ const customerSignupJoiSchema = Joi.object<CustomerDoc>({
     }),
   full_name: Joi.string().required(),
   phone: Joi.string()
-    .pattern(/^[0-9]{10}$/) // Matches a 10-digit phone number
+    .pattern(/^[0-9]{10}$/) 
     .required().messages({
       'string.pattern.base': 'Phone number must be a 10-digit number',
       'any.required': 'Phone number is required',
