@@ -48,7 +48,6 @@ export class CategoryService {
             { name, description },
             { new: true }
         );
-
         if (!updatedCategory) {
             throw new Error('Category not found');
         }
